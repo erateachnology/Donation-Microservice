@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: donation
+  profiles:
+    active: local
+
+
+springdoc:
+  api-docs:
+    path: /donation-docs
+
+
+
