@@ -1,2 +1,8 @@
 spring:
   profiles: k8s
+
+server:
+  port: 9000
+
+ledger:
+  name: ${ledger.name}

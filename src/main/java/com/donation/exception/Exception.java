@@ -12,7 +12,6 @@ import java.time.ZonedDateTime;
 public class Exception {
 
     private String message;
-    private Throwable throwable;
     private HttpStatus httpStatus;
     private ZonedDateTime timeStamp;
 }
