@@ -47,12 +47,12 @@ public class WalletController {
 
     @Operation(summary = "Insert into Wallet")
     @PostMapping("/wallet/insert")
-    private ResponseEntity<Response> insertWallet(@RequestBody Wallet wallet) {
+    public ResponseEntity<Response> insertWallet(@RequestBody Wallet wallet) {
         logger.info(INSERT_WALLET_START_TO_OWNER_ID, wallet.getOwnerId());
         Response response = new Response();
         try {
-            String Val = walletService.insertWallets(wallet);
-            response.setId(Val);
+            String walletID = walletService.insertWallets(wallet);
+            response.setId(walletID);
             logger.info(INSERT_WALLET_SUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException | InvalidSessionException | SdkClientException e) {

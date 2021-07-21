@@ -29,13 +29,13 @@ public class TransactionServiceImpl implements TransactionService {
     public static final String ORIGINAL_AMOUNT = "originalAmount";
     public static final String ORIGINAL_CURRENCY = "originalCurrency";
     public static final String CURRENCY_CONVERSION = "currencyConversion";
-    private final String INSERT_INTO_REVENUE = "INSERT INTO TRANSACTIONS ?";
-    private final String GET_TRANSACTION_BY_DOC = "SELECT * FROM TRANSACTIONS AS t BY t_id WHERE t_id = ?";
+    private static final String INSERT_INTO_REVENUE = "INSERT INTO TRANSACTIONS ?";
+    private static final String GET_TRANSACTION_BY_DOC = "SELECT * FROM TRANSACTIONS AS t BY t_id WHERE t_id = ?";
 
     @Autowired
-    private Driver qldbDriver;
+    private final Driver qldbDriver;
     @Autowired
-    private WalletServiceImpl walletService;
+    private final WalletServiceImpl walletService;
 
     public TransactionServiceImpl(Driver qldbDriver, WalletServiceImpl walletService) {
         this.qldbDriver = qldbDriver;
@@ -46,7 +46,7 @@ public class TransactionServiceImpl implements TransactionService {
     public String insertTransaction(Transaction transaction) {
         IonSystem ionSys = IonSystemBuilder.standard().build();
         IonStruct transactionData = ionSys.newEmptyStruct();
-        logger.info("Transaction add service start {}", transaction.toString());
+        logger.info("Transaction add service start");
         transactionData.put(TIMESTAMP).newTimestamp(transaction.getTimestamp());
         transactionData.put(SENDER_WALLET_ID).newString(transaction.getSenderWalletId());
         transactionData.put(RECEIVER_WALLET_ID).newString(transaction.getReceiverWalletId());
@@ -77,7 +77,7 @@ public class TransactionServiceImpl implements TransactionService {
             Result result = txn.execute(GET_TRANSACTION_BY_DOC, ionSys.newString(id));
             if (!result.isEmpty()) {
                 for (IonValue ionValue : result) {
-                    logger.info("{} Transactions retrieved by doc id {} ", ionValue.toString(), id);
+                    logger.info("Transactions retrieved by doc id {} ",id);
                     ionStruct = (IonStruct) ionValue;
                     //transaction.setTimestamp();
                     transaction.setSenderWalletId(((IonString) ionStruct.get(SENDER_WALLET_ID)).stringValue());

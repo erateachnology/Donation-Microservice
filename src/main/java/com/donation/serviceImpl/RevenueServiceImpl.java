@@ -1,19 +1,20 @@
 package com.donation.serviceImpl;
 
-import com.amazon.ion.IonStruct;
-import com.amazon.ion.IonSystem;
-import com.amazon.ion.IonValue;
-import com.amazon.ion.Timestamp;
+import com.amazon.ion.*;
 import com.amazon.ion.system.IonSystemBuilder;
 import com.donation.configs.Driver;
 import com.donation.dto.FinancialOverviewRequest;
+import com.donation.dto.FinancialOverviewResponse;
 import com.donation.dto.Revenue;
+import com.donation.dto.Total;
 import com.donation.service.RevenueService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.qldb.Result;
+
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -38,8 +39,9 @@ public class RevenueServiceImpl implements RevenueService {
     public static final String ORIGINAL_AMOUNT = "originalAmount";
     public static final String ORIGINAL_CURRENCY = "originalCurrency";
     public static final String CURRENCY_CONVERSION = "currencyConversion";
-    private final String INSERT_INTO_REVENUE = "INSERT INTO REVENUES ?";
-    private final String GET_REVENUE = "SELECT * FROM REVENUES AS r WHERE r.ownerId = ? AND r.revenueAddedTime >= ? AND r.revenueAddedTime < ?";
+    private static final String INSERT_INTO_REVENUE = "INSERT INTO REVENUES ?";
+    public static final String TOTAL_AMOUNT = "totalAmount";
+    private static final String GET_REVENUE = "SELECT * FROM REVENUES AS r WHERE r.ownerId = ? AND r.revenueAddedTime >= ? AND r.revenueAddedTime < ?";
 
     @Autowired
     private Driver qldbDriver;
@@ -56,7 +58,7 @@ public class RevenueServiceImpl implements RevenueService {
     public String insertRevenue(Revenue revenue) {
         String uniqueID = UUID.randomUUID().toString();
         IonSystem ionSys = IonSystemBuilder.standard().build();
-        logger.info("Revenue add service start {}", revenue.toString());
+        logger.info("Revenue add service start");
         IonStruct revenueData = ionSys.newEmptyStruct();
         revenueData.put(REVENUE_ID).newString(uniqueID);
         revenueData.put(OWNER_ID).newString(revenue.getOwnerId());
@@ -84,6 +86,7 @@ public class RevenueServiceImpl implements RevenueService {
         Date parsedDate = null;
         Timestamp startTimestamp;
         Timestamp endTimestamp;
+        final BigDecimal[] total = {new BigDecimal(0)};
         try {
             parsedDate = dateFormat.parse(financialOverviewRequest.getYear());
             Calendar cal = Calendar.getInstance();
@@ -99,10 +102,18 @@ public class RevenueServiceImpl implements RevenueService {
                     for (IonValue ionValue : result) {
                         IonStruct ionStruct;
                         ionStruct = (IonStruct) ionValue;
+                        BigDecimal currentTotal = ((IonDecimal) ionStruct.get(TOTAL_AMOUNT)).decimalValue();
+                        total[0] = currentTotal.add(total[0]);
                     }
 
                 }
             });
+            Total amountTotal = new Total();
+            amountTotal.setAmount(total[0]);
+            amountTotal.setYear(financialOverviewRequest.getYear());
+            amountTotal.setCurrency(financialOverviewRequest.getCurrency());
+            FinancialOverviewResponse financialOverviewResponse = new FinancialOverviewResponse();
+            financialOverviewResponse.setTotal(amountTotal);
 
             // Timestamp endTimeStamp = new Timestamp(cal.add(Calendar.YEAR, 1));
         } catch (ParseException e) {

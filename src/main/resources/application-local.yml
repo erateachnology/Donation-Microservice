@@ -5,4 +5,7 @@ server:
 
 ledger:
   name: demo
+  region: US_EAST_2
+
+
 

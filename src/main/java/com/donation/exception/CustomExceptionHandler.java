@@ -12,34 +12,34 @@ public class CustomExceptionHandler {
     public ResponseEntity<Object> handleBadRequestException(BadRequestException e){
 
         HttpStatus badRequest = HttpStatus.BAD_REQUEST;
-        Exception exception = new Exception(
+        ExceptionRequest exceptionRequest = new ExceptionRequest(
                 e.getMessage(),
                 badRequest,
                 ZonedDateTime.now()
         );
-   return new ResponseEntity<>(exception, badRequest);
+   return new ResponseEntity<>(exceptionRequest, badRequest);
     }
 
     @ExceptionHandler(value = {NotFoundException.class})
     public ResponseEntity<Object> notFoundException(NotFoundException e){
 
         HttpStatus badRequest = HttpStatus.NOT_FOUND;
-        Exception exception = new Exception(
+        ExceptionRequest exceptionRequest = new ExceptionRequest(
                 e.getMessage(),
                 badRequest,
                 ZonedDateTime.now()
         );
-        return new ResponseEntity<>(exception, badRequest);
+        return new ResponseEntity<>(exceptionRequest, badRequest);
     }
 
     @ExceptionHandler(value = {InsufficientAvailableAmountException.class})
     public  ResponseEntity<Object> InsufficientAvailableAmountExceptionHandle(InsufficientAvailableAmountException e){
         HttpStatus badRequest = HttpStatus.NOT_FOUND;
-        Exception exception = new Exception(
+        ExceptionRequest exceptionRequest = new ExceptionRequest(
                 e.getMessage(),
                 badRequest,
                 ZonedDateTime.now()
         );
-        return new ResponseEntity<>(exception, badRequest);
+        return new ResponseEntity<>(exceptionRequest, badRequest);
     }
 }

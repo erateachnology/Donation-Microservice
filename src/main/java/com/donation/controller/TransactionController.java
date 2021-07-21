@@ -60,7 +60,7 @@ public class TransactionController {
             Transaction transaction = transactionService.getTransactionByDocIid(id);
             response.setTransaction(transaction);
             response.setMessage(TRANSACTION_RETRIEVED_SUCCESSFULLY);
-            logger.info(TRANSACTION_RETRIEVED_SUCCESSFULLY1, transaction.toString());
+            logger.info(TRANSACTION_RETRIEVED_SUCCESSFULLY1, id);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException | InvalidSessionException | SdkClientException e) {
             logger.error(TRANSACTION_RETRIEVED_ERROR, e);

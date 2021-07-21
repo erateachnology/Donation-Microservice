@@ -47,18 +47,15 @@ public class WalletServiceImpl implements WalletService {
     private static final String INSERT_INTO_WALLET = "INSERT INTO WALLET ?";
     private static final String UPDATE_WALLET = "UPDATE WALLET AS w BY w_id SET w.availableAmount = ?,w.totalAmount = ? WHERE w_id = ?";
     private static final String GET_WALLET_DOC_ID_BY_TYPE = "SELECT id FROM WALLET AS w By id WHERE w.walletType = ?";
-    private static final String Get_FROM_WALLET = "SELECT data  FROM _ql_committed_WALLET WHERE metadata.id = ?";
-    private static final String WALLETS_BY_WALLET_TYPE_SINGLE_PARAM = "SELECT * FROM  WALLET AS w WHERE w.walletType IN (?)";
     private static final String WALLET_BY_WALLET_TYPE = "SELECT * FROM WALLET AS w WHERE w.walletType = ?";
     private static final String WALLETS_BY_MISSION = "SELECT * FROM WALLET AS w WHERE w.walletType = ? AND w.missionId = ?";
-    private static final String WALLETS_BY_WALLET_TYPE_TWO_PARAM = "SELECT * FROM  WALLET AS w WHERE w.walletType IN (?,?)";
     private static final String GET_WALLET_BY_DOC_ID = "SELECT * FROM WALLET AS w BY w_id WHERE w_id = ?";
     public static final String NO_WALLET_UNDER_GIVEN_TYPE = "No wallet under given type";
     public static final String OUT_OVERHEADS = "OUT_Overheads";
     public static final String OUT_MISSION = "OUT_Mission";
     public static final String OUT_DEVELOPMENT = "OUT_Development";
     public static final String INSUFFICIENT_AVAILABLE_FUNDS = "Insufficient Available Funds";
-    private final String GET_WALLET_ID_MISSION_ID = "SELECT id FROM WALLET AS w By id WHERE w.walletType = ? AND w.missionId = ?";
+    private static final String GET_WALLET_ID_MISSION_ID = "SELECT id FROM WALLET AS w By id WHERE w.walletType = ? AND w.missionId = ?";
     private static final Logger logger = LogManager.getLogger(WalletServiceImpl.class.getName());
 
     @Autowired
@@ -146,44 +143,48 @@ public class WalletServiceImpl implements WalletService {
     public void updateWalletValues(WalletUpdateRequest walletUpdateRequest) {
         //Increment
         //get the wallet by doc ID
-        IonStruct ionStruct;
         Result result = getWalletResult(walletUpdateRequest.getId());
         IonSystem ionSys = IonSystemBuilder.standard().build();
-        //Increment the fileds
+        //Increment the fields
         if ((!result.isEmpty())) {
-            for (IonValue ionValue : result) {
-                ionStruct = (IonStruct) ionValue;
-                BigDecimal currentAvailable = ((IonDecimal) ionStruct.get(AVAILABLE_AMOUNT)).decimalValue();
-                BigDecimal currentTotalAmount = ((IonDecimal) ionStruct.get(TOTAL_AMOUNT)).decimalValue();
-                BigDecimal updatedAvailable = new BigDecimal("0.00");
-                BigDecimal updatedTotal = new BigDecimal("0.00");
-                if (walletUpdateRequest.getAvailableAmount() != null ||
-                        walletUpdateRequest.getTotalAmount() != null) {
-                    if ((walletUpdateRequest.getOperation().equalsIgnoreCase(INCREMENT))) {
-                        updatedAvailable = currentAvailable.add(ionSys.newDecimal(walletUpdateRequest.getAvailableAmount()).decimalValue());
-                        updatedTotal = currentTotalAmount.add(ionSys.newDecimal(walletUpdateRequest.getTotalAmount()).decimalValue());
-                        update(updatedAvailable, updatedTotal, walletUpdateRequest.getId());
-                    } else if ((walletUpdateRequest.getOperation().equalsIgnoreCase(DECREMENT))) {
-
-                        if (currentAvailable.compareTo(walletUpdateRequest.getAvailableAmount()) > 0) {
-                            updatedAvailable = currentAvailable.subtract(ionSys.newDecimal
-                                    (walletUpdateRequest.getAvailableAmount()).decimalValue());
-                        } else {
-                            throw new InsufficientAvailableAmountException(INSUFFICIENT_AVAILABLE_FUNDS);
-                        }
-
-                        updatedTotal = ionSys.newDecimal
-                                (walletUpdateRequest.getTotalAmount()).decimalValue();
-
-                        update(updatedAvailable, updatedTotal, walletUpdateRequest.getId());
-                    }
-                }
-
-            }
+            walletUpdate(walletUpdateRequest, result, ionSys);
         } else {
             throw new NotFoundException(NO_WALLET_UNDER_THE_DOC_ID + walletUpdateRequest.getId());
         }
 
+    }
+
+    private void walletUpdate(WalletUpdateRequest walletUpdateRequest, Result result, IonSystem ionSys) {
+        IonStruct ionStruct;
+        for (IonValue ionValue : result) {
+            ionStruct = (IonStruct) ionValue;
+            BigDecimal currentAvailable = ((IonDecimal) ionStruct.get(AVAILABLE_AMOUNT)).decimalValue();
+            BigDecimal currentTotalAmount = ((IonDecimal) ionStruct.get(TOTAL_AMOUNT)).decimalValue();
+            BigDecimal updatedAvailable;
+            BigDecimal updatedTotal;
+            if (walletUpdateRequest.getAvailableAmount() != null ||
+                    walletUpdateRequest.getTotalAmount() != null) {
+                if ((walletUpdateRequest.getOperation().equalsIgnoreCase(INCREMENT))) {
+                    updatedAvailable = currentAvailable.add(ionSys.newDecimal(walletUpdateRequest.getAvailableAmount()).decimalValue());
+                    updatedTotal = currentTotalAmount.add(ionSys.newDecimal(walletUpdateRequest.getTotalAmount()).decimalValue());
+                    update(updatedAvailable, updatedTotal, walletUpdateRequest.getId());
+                } else if ((walletUpdateRequest.getOperation().equalsIgnoreCase(DECREMENT))) {
+
+                    if (currentAvailable.compareTo(walletUpdateRequest.getAvailableAmount()) > 0) {
+                        updatedAvailable = currentAvailable.subtract(ionSys.newDecimal
+                                (walletUpdateRequest.getAvailableAmount()).decimalValue());
+                    } else {
+                        throw new InsufficientAvailableAmountException(INSUFFICIENT_AVAILABLE_FUNDS);
+                    }
+
+                    updatedTotal = ionSys.newDecimal
+                            (walletUpdateRequest.getTotalAmount()).decimalValue();
+
+                    update(updatedAvailable, updatedTotal, walletUpdateRequest.getId());
+                }
+            }
+
+        }
     }
 
     public void update(BigDecimal updatedAvailable, BigDecimal updatedTotal, String id) {
@@ -217,24 +218,6 @@ public class WalletServiceImpl implements WalletService {
                     }else{
                         result[0] = txn.execute(WALLET_BY_WALLET_TYPE, ionSys.newString(params));
                     }
-
-                   /* //Check wallet type
-                    if (params.equalsIgnoreCase(IN_OVERHEADS)) {
-                        result[0] = txn.execute(WALLET_BY_WALLET_TYPE, ionSys.newString(params));
-                    } else if (params.equalsIgnoreCase(IN_DEVELOPMENT)) {
-                        result[0] = txn.execute(WALLET_BY_WALLET_TYPE, ionSys.newString(params));
-                    } else if (params.equalsIgnoreCase(IN_MISSION)) {
-                        result[0] = txn.execute(WALLETS_BY_MISSION, ionSys.newString(params),
-                                ionSys.newString(walletTypeRequest.getMissionId()));
-                    } else if (params.equalsIgnoreCase(OUT_OVERHEADS)) {
-                        result[0] = txn.execute(WALLET_BY_WALLET_TYPE, ionSys.newString(params));
-
-                    } else if (params.equalsIgnoreCase(OUT_DEVELOPMENT)) {
-                        result[0] = txn.execute(WALLET_BY_WALLET_TYPE, ionSys.newString(params));
-                    } else if (params.equalsIgnoreCase(OUT_MISSION)) {
-                        result[0] = txn.execute(WALLETS_BY_MISSION, ionSys.newString(params),
-                                ionSys.newString(walletTypeRequest.getMissionId()));
-                    }*/
                     if (!result[0].isEmpty()) {
                         for (IonValue ionValue : result[0]) {
                             ionStruct[0] = (IonStruct) ionValue;
