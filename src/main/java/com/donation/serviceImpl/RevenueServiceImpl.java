@@ -102,7 +102,7 @@ public class RevenueServiceImpl implements RevenueService {
                     for (IonValue ionValue : result) {
                         IonStruct ionStruct;
                         ionStruct = (IonStruct) ionValue;
-                        BigDecimal currentTotal = ((IonDecimal) ionStruct.get(TOTAL_AMOUNT)).decimalValue();
+                        BigDecimal currentTotal = ((IonDecimal) ionStruct.get(AMOUNT)).decimalValue();
                         total[0] = currentTotal.add(total[0]);
                     }
 

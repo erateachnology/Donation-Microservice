@@ -18,7 +18,9 @@ import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class WalletServiceImpl implements WalletService {
@@ -44,22 +46,22 @@ public class WalletServiceImpl implements WalletService {
     public static final String CURRENCY = "currency";
     public static final String WALLET_INSERT_SUCCESSFULLY = "Wallet insert successfully {}";
     public static final String DOCUMENT_ID = "documentId";
+    public static final String NO_WALLET_UNDER_GIVEN_TYPE = "No wallet under given type";
+    public static final String OUT_OVERHEADS = "OUT_Overheads";
+    public static final String OUT_MISSION = "OUT_Mission";
+    public static final String OUT_DEVELOPMENT = "OUT_Development";
+    public static final String INSUFFICIENT_AVAILABLE_FUNDS = "Insufficient Available Funds";
     private static final String INSERT_INTO_WALLET = "INSERT INTO WALLET ?";
     private static final String UPDATE_WALLET = "UPDATE WALLET AS w BY w_id SET w.availableAmount = ?,w.totalAmount = ? WHERE w_id = ?";
     private static final String GET_WALLET_DOC_ID_BY_TYPE = "SELECT id FROM WALLET AS w By id WHERE w.walletType = ?";
     private static final String WALLET_BY_WALLET_TYPE = "SELECT * FROM WALLET AS w WHERE w.walletType = ?";
     private static final String WALLETS_BY_MISSION = "SELECT * FROM WALLET AS w WHERE w.walletType = ? AND w.missionId = ?";
     private static final String GET_WALLET_BY_DOC_ID = "SELECT * FROM WALLET AS w BY w_id WHERE w_id = ?";
-    public static final String NO_WALLET_UNDER_GIVEN_TYPE = "No wallet under given type";
-    public static final String OUT_OVERHEADS = "OUT_Overheads";
-    public static final String OUT_MISSION = "OUT_Mission";
-    public static final String OUT_DEVELOPMENT = "OUT_Development";
-    public static final String INSUFFICIENT_AVAILABLE_FUNDS = "Insufficient Available Funds";
     private static final String GET_WALLET_ID_MISSION_ID = "SELECT id FROM WALLET AS w By id WHERE w.walletType = ? AND w.missionId = ?";
     private static final Logger logger = LogManager.getLogger(WalletServiceImpl.class.getName());
 
     @Autowired
-    private Driver qldbDriver;
+    private final Driver qldbDriver;
 
     public WalletServiceImpl(Driver qldbDriver) {
         this.qldbDriver = qldbDriver;
@@ -202,7 +204,7 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public WalletListResponse getWalletsByType(WalletTypeRequest walletTypeRequest) {
         if (!walletTypeRequest.getWalletType().isEmpty()) {
-            List<String> walletTypeList = Arrays.asList(walletTypeRequest.getWalletType().split(","));
+            String[] walletTypeList = walletTypeRequest.getWalletType().split(",");
             final BigDecimal[] totalAmount = {new BigDecimal(0)};
             final BigDecimal[] totalAvailableAmount = {new BigDecimal(0)};
             WalletListResponse walletListResponse = new WalletListResponse();
@@ -212,10 +214,10 @@ public class WalletServiceImpl implements WalletService {
                 IonSystem ionSys = IonSystemBuilder.standard().build();
                 for (String params : walletTypeList) {
 
-                    if(params.equalsIgnoreCase(IN_MISSION) ||params.equalsIgnoreCase(OUT_MISSION) ){
+                    if (params.equalsIgnoreCase(IN_MISSION) || params.equalsIgnoreCase(OUT_MISSION)) {
                         result[0] = txn.execute(WALLETS_BY_MISSION, ionSys.newString(params),
                                 ionSys.newString(walletTypeRequest.getMissionId()));
-                    }else{
+                    } else {
                         result[0] = txn.execute(WALLET_BY_WALLET_TYPE, ionSys.newString(params));
                     }
                     if (!result[0].isEmpty()) {

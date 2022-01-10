@@ -13,6 +13,5 @@ public class DonationMicroserviceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(DonationMicroserviceApplication.class, args);
-
     }
 }

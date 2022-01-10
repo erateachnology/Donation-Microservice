@@ -37,11 +37,11 @@ public class DonationServiceImpl implements DonationService {
     private static final String CURRENCY = "currency";
     private static final String SOURCE = "source";
     private static final String TRANSACTION_ID = "transactionId";
-    private static final String TIME_STAMP = "timeStamp";
     private static final String ORIGINAL_AMOUNT = "originalAmount";
     private static final String ORIGINAL_CURRENCY = "originalCurrency";
     private static final String CURRENCY_CONVERSION = "currencyConversion";
     private static final String TOTAL_AMOUNT = "totalAmount";
+    public static final String REVENUE_ADDED_TIME = "revenueAddedTime";
     private static final String ID = "id";
     private static final String DOCUMENT_ID = "documentId";
     private static final String OVERHEADS = "OVERHEADS";
@@ -276,7 +276,7 @@ public class DonationServiceImpl implements DonationService {
         revenueData.put(CURRENCY).newString(donationRequest.getCurrency());
         revenueData.put(SOURCE).newString(donationRequest.getSource());
         revenueData.put(TRANSACTION_ID).newString(donationRequest.getTransactionId());
-        revenueData.put(TIME_STAMP).newTimestamp(donationRequest.getTransactionTimestamp());
+        revenueData.put(REVENUE_ADDED_TIME).newTimestamp(donationRequest.getTransactionTimestamp());
         revenueData.put(ORIGINAL_AMOUNT).newDecimal(donationRequest.getOriginalAmount());
         revenueData.put(ORIGINAL_CURRENCY).newString(donationRequest.getOriginalCurrency());
         revenueData.put(CURRENCY_CONVERSION).newDecimal(donationRequest.getCurrencyConversion());
